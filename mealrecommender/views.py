@@ -87,11 +87,20 @@ def get_meal_plan(request):
 			regimen = form.cleaned_data['regimen']
 			allergen = form.cleaned_data['allergens']
 			dietary_restrictions = form.cleaned_data['dietary_restrictions']
-			return render(request, 'mealrecommender/meals.html', {'name': name, 'regimen': regimen})
+			
+			# determine meals 
+			meals = determine_meals(name, height, weight, age, gender, regimen, allergen)
+
+
+			return render(request, 'mealrecommender/meals.html', {'name': name, 'regimen': regimen, 'meals': meals})
 	else:
 		form = AthleteForm()
 
 	return render(request, 'mealrecommender/athlete_form.html', {'form': form})
 
+
+
+def determine_meals(name, height, weight, age, gender, regimen, allergen):
+	return ['egg', 'salad', 'chicken']
 
 
