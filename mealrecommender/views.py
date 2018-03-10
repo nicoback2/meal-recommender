@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django import forms
+import os
 import csv
-
 # Create your views here.
 
 class AthleteForm(forms.Form):
@@ -36,7 +36,7 @@ class AthleteForm(forms.Form):
 	# Allergens
 	NONE = 'None'
 	SOY = 'Soy'
-	MILK = 'MILK'
+	MILK = 'Milk'
 	TREENUTS = 'Tree Nuts'
 	PEANUTS = 'Peanuts'
 	FISH = 'Fish'
@@ -49,7 +49,7 @@ class AthleteForm(forms.Form):
 	ALLERGEN_OPTIONS = (
 		(NONE, 'None'),
 		(SOY, 'Soy'),
-		(MILK, 'MILK'),
+		(MILK, 'Milk'),
 		(TREENUTS, 'Tree Nuts'),
 		(PEANUTS, 'Peanuts'),
 		(FISH, 'Fish'),
@@ -88,7 +88,7 @@ def get_foods():
 # is_dinner: bool
 # has_allergen: list of strings where each element is one of: gluten, egg, fish, milk, soy, wheat, peanuts, tree nuts, sesame, shellfish
 # violates_dietary_restriction: list of strings, where each element is one of: vegetarian, vegan
-    f = open('food.csv', 'r')
+    f = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'mealrecommender/food.csv'), 'r')
 
     with f:
 
