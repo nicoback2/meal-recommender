@@ -18,6 +18,15 @@ class AthleteForm(forms.Form):
 		)
 	gender = forms.ChoiceField(choices = GENDER_OPTIONS, widget=forms.Select())
 
+	SWIMMING = 'Swimming'
+
+	SPORT_OPTIONS = (
+		(SWIMMING, 'Swimming'),
+		)
+
+	sport = forms.ChoiceField(choices = SPORT_OPTIONS, widget = forms.Select())
+
+
     # Regimen type
 	OFFDAY = 'Off Day'
 	RECOVERY = 'Recovery'
@@ -124,12 +133,13 @@ def get_meal_plan(request):
 			weight = form.cleaned_data['weight']
 			age = form.cleaned_data['age']
 			gender = form.cleaned_data['gender']
+			sport = form.cleaned_data['sport']
 			regimen = form.cleaned_data['regimen']
 			allergen = form.cleaned_data['allergens']
 			dietary_restrictions = form.cleaned_data['dietary_restrictions']
 
 			# determine meals
-			meals = determine_meals(name, height, weight, age, gender, regimen, allergen)
+			meals = determine_meals(name, height, weight, age, gender, sport, regimen, allergen)
 
 
 			return render(request, 'mealrecommender/meals.html', {'name': name, 'regimen': regimen, 'meals': meals})
@@ -138,7 +148,7 @@ def get_meal_plan(request):
 
 	return render(request, 'mealrecommender/athlete_form.html', {'form': form})
 
-def determine_meals(name, height, weight, age, gender, regimen, allergen):
+def determine_meals(name, height, weight, age, gender, sport, regimen, allergen):
     foods = get_foods()
     #NOTE: allergens and dietary restrictions are all lower case in the foods list, but capitalized in the form data.
     return ['egg', 'salad', 'chicken']
