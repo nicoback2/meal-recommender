@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django import forms
+import csv
 
 # Create your views here.
 
@@ -35,7 +36,7 @@ class AthleteForm(forms.Form):
 	# Allergens
 	NONE = 'None'
 	SOY = 'Soy'
-	DAIRY = 'Dairy'
+	MILK = 'MILK'
 	TREENUTS = 'Tree Nuts'
 	PEANUTS = 'Peanuts'
 	FISH = 'Fish'
@@ -48,7 +49,7 @@ class AthleteForm(forms.Form):
 	ALLERGEN_OPTIONS = (
 		(NONE, 'None'),
 		(SOY, 'Soy'),
-		(DAIRY, 'Dairy'),
+		(MILK, 'MILK'),
 		(TREENUTS, 'Tree Nuts'),
 		(PEANUTS, 'Peanuts'),
 		(FISH, 'Fish'),
@@ -70,15 +71,54 @@ class AthleteForm(forms.Form):
 
 	allergens = forms.MultipleChoiceField(choices = ALLERGEN_OPTIONS, widget = forms.CheckboxSelectMultiple())
 	dietary_restrictions = forms.MultipleChoiceField(choices = DIETARY_RESTRICTION_OPTIONS, widget = forms.CheckboxSelectMultiple())
-	
+
+def get_foods():
+# converts food csv into a list of dicts, each dict representing a single food item
+# the id of a food item corresponds to its index in the list. the id is also located in the 'id' field of the dict
+# the fields of each food item are:
+
+# id: int
+# name: string
+# calories: int
+# carbs: float
+# protein: float
+# fat: float
+# is_breakfast: bool (i.e. can this food item be included in a breakfast meal?)
+# is_lunch: bool
+# is_dinner: bool
+# has_allergen: list of strings where each element is one of: gluten, egg, fish, milk, soy, wheat, peanuts, tree nuts, sesame, shellfish
+# violates_dietary_restriction: list of strings, where each element is one of: vegetarian, vegan
+    f = open('food.csv', 'r')
+
+    with f:
+
+        reader = csv.DictReader(f)
+        foods = list(reader)
+        bools = ['is_breakfast', 'is_lunch', 'is_dinner']
+        for i, el in enumerate(foods):
+            el['has_allergen'] = (el['has_allergen']).split("@")
+            if len(el['has_allergen']) == 1 and el['has_allergen'][0] == '':
+                el['has_allergen'] = []
+            el['violates_dietary_restriction'] = (el['violates_dietary_restriction']).split()
+            el['id'] = i
+            el['calories'] = int(el['calories'])
+            el['protein'] = float(el['protein'])
+            el['carbs'] = float(el['carbs'])
+            el['fat'] = float(el['fat'])
+            for b in bools:
+                if el[b] == 'TRUE':
+                    el[b] = True
+                else:
+                    el[b] = False
+        return foods
 
 def get_meal_plan(request):
 	# If the form has been submitted
-	if request.method == 'POST': 
+	if request.method == 'POST':
 		# A form bound to the POST data that has fields for user name and user password
-		form = AthleteForm(request.POST) 
+		form = AthleteForm(request.POST)
 		# All validation rules pass
-		if form.is_valid(): 
+		if form.is_valid():
 			name = form.cleaned_data['name']
 			height = form.cleaned_data['height']
 			weight = form.cleaned_data['weight']
@@ -87,8 +127,8 @@ def get_meal_plan(request):
 			regimen = form.cleaned_data['regimen']
 			allergen = form.cleaned_data['allergens']
 			dietary_restrictions = form.cleaned_data['dietary_restrictions']
-			
-			# determine meals 
+
+			# determine meals
 			meals = determine_meals(name, height, weight, age, gender, regimen, allergen)
 
 
@@ -98,9 +138,7 @@ def get_meal_plan(request):
 
 	return render(request, 'mealrecommender/athlete_form.html', {'form': form})
 
-
-
 def determine_meals(name, height, weight, age, gender, regimen, allergen):
-	return ['egg', 'salad', 'chicken']
-
-
+    foods = get_foods()
+    #NOTE: allergens and dietary restrictions are all lower case in the foods list, but capitalized in the form data.
+    return ['egg', 'salad', 'chicken']
