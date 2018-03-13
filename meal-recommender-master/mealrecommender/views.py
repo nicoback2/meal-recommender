@@ -105,7 +105,7 @@ def get_foods():
 
         reader = csv.DictReader(f)
         foods = list(reader)
-        bools = ['is_breakfast', 'is_lunch', 'is_dinner']
+        bools = ['is_breakfast', 'is_lunch', 'is_snack','is_dinner']
         for i, el in enumerate(foods):
             el['has_allergen'] = (el['has_allergen']).split("@")
             if len(el['has_allergen']) == 1 and el['has_allergen'][0] == '':
@@ -141,10 +141,10 @@ def get_meal_plan(request):
 			dietary_restrictions = form.cleaned_data['dietary_restrictions']
 
 			# determine meals
-			breakfast, lunch, dinner = determine_meals(name, height, weight, age, gender, sport, regimen, allergen, dietary_restrictions)
+			breakfast, lunch, dinner, snack = determine_meals(name, height, weight, age, gender, sport, regimen, allergen, dietary_restrictions)
 
 
-			return render(request, 'mealrecommender/meals.html', {'name': name, 'regimen': regimen, 'breakfast': breakfast, 'lunch': lunch, 'dinner': dinner})
+			return render(request, 'mealrecommender/meals.html', {'name': name, 'regimen': regimen, 'breakfast': breakfast, 'lunch': lunch, 'dinner': dinner, 'snack': snack})
 	else:
 		form = AthleteForm()
 
@@ -175,6 +175,7 @@ def determine_meals(name, height, weight, age, gender, sport, regimen, allergen,
     filtered_foods_breakfast = []
     filtered_foods_lunch = []
     filtered_foods_dinner = []
+    filtered_foods_snack = []
     for food in foods:
     	if not hasAllergy(allergen, food) and not hasRestriction(dietary_restrictions, food) and food['is_breakfast']:
     		filtered_foods_breakfast.append(food)
@@ -182,6 +183,9 @@ def determine_meals(name, height, weight, age, gender, sport, regimen, allergen,
     		filtered_foods_lunch.append(food)
     	if not hasAllergy(allergen, food) and not hasRestriction(dietary_restrictions, food) and food['is_dinner']:
     		filtered_foods_dinner.append(food)
+    	if not hasAllergy(allergen, food) and not hasRestriction(dietary_restrictions, food) and food['is_snack']:
+    		filtered_foods_snack.append(food)
+    print(filtered_foods_snack)
     if gender == 'male':
     	BMR = (10 * float(weight)) + (6.25 * float(height)) - (5 * float(age)) + 5
     else:
@@ -195,9 +199,17 @@ def determine_meals(name, height, weight, age, gender, sport, regimen, allergen,
     else:
     	activityFactor = 1.725
     TDEE = BMR * activityFactor
-    breakfast = createMeal(filtered_foods_breakfast, TDEE//3)
-    lunch = createMeal(filtered_foods_lunch, TDEE//3)
-    dinner = createMeal(filtered_foods_dinner, TDEE//3)
+    breakfast = createMeal(filtered_foods_breakfast, TDEE//4)
+    lunch = createMeal(filtered_foods_lunch, TDEE//4)
+
+    # Do not repeat foods for dinner and lunch
+    for food in filtered_foods_dinner:
+    	if food['name'] in lunch:
+    		filtered_foods_dinner.remove(food)
+
+    dinner = createMeal(filtered_foods_dinner, TDEE//4)
+    print(filtered_foods_snack)
+    snack = createMeal(filtered_foods_snack, TDEE//4)
     #NOTE: allergens and dietary restrictions are all lower case in the foods list, but capitalized in the form data.
-    return (breakfast, lunch, dinner)
+    return (breakfast, lunch, dinner, snack)
     
