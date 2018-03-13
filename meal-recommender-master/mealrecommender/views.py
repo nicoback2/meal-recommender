@@ -143,7 +143,6 @@ def get_meal_plan(request):
 			# determine meals
 			breakfast, lunch, dinner, snack = determine_meals(name, height, weight, age, gender, sport, regimen, allergen, dietary_restrictions)
 
-
 			return render(request, 'mealrecommender/meals.html', {'name': name, 'regimen': regimen, 'breakfast': breakfast, 'lunch': lunch, 'dinner': dinner, 'snack': snack})
 	else:
 		form = AthleteForm()
