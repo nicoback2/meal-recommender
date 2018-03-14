@@ -217,12 +217,14 @@ def determine_meals(name, height, weight, age, gender, sport, regimen, allergen,
 	breakfast = createMeal(filtered_foods_breakfast, TDEE//4, regimen)
 	breakfast = extractFoods(breakfast, foods)
 	lunch = createMeal(filtered_foods_lunch, TDEE//4, regimen)
-	lunch = extractFoods(lunch, foods)
+	print(lunch)
 	# Do not repeat foods for dinner and lunch
 	for food in filtered_foods_dinner:
 		if food['name'] in lunch:
 			filtered_foods_dinner.remove(food)
-
+	lunch = extractFoods(lunch, foods)
+	# print(str(len(filtered_foods_dinner)))
+	# print(str(len(filtered_foods_dinner)))
 	dinner = createMeal(filtered_foods_dinner, TDEE//4, regimen)
 	dinner = extractFoods(dinner, foods)
 	print(filtered_foods_snack)
