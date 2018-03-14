@@ -29,7 +29,7 @@ class AthleteForm(forms.Form):
 	sport = forms.ChoiceField(choices = SPORT_OPTIONS, widget = forms.Select())
 
 
-    # Regimen type
+	# Regimen type
 	OFFDAY = 'Off Day'
 	RECOVERY = 'Recovery'
 	COMPETITION = 'Competition'
@@ -99,29 +99,29 @@ def get_foods():
 # is_dinner: bool
 # has_allergen: list of strings where each element is one of: gluten, egg, fish, milk, soy, wheat, peanuts, tree nuts, sesame, shellfish
 # violates_dietary_restriction: list of strings, where each element is one of: vegetarian, vegan
-    f = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'mealrecommender/food.csv'), 'r')
+	f = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'mealrecommender/food.csv'), 'r')
 
-    with f:
+	with f:
 
-        reader = csv.DictReader(f)
-        foods = list(reader)
-        bools = ['is_breakfast', 'is_lunch', 'is_snack','is_dinner']
-        for i, el in enumerate(foods):
-            el['has_allergen'] = (el['has_allergen']).split("@")
-            if len(el['has_allergen']) == 1 and el['has_allergen'][0] == '':
-                el['has_allergen'] = []
-            el['violates_dietary_restriction'] = (el['violates_dietary_restriction']).split()
-            el['id'] = i
-            el['calories'] = int(el['calories'])
-            el['protein'] = float(el['protein'])
-            el['carbs'] = float(el['carbs'])
-            el['fat'] = float(el['fat'])
-            for b in bools:
-                if el[b] == 'TRUE':
-                    el[b] = True
-                else:
-                    el[b] = False
-        return foods
+		reader = csv.DictReader(f)
+		foods = list(reader)
+		bools = ['is_breakfast', 'is_lunch', 'is_snack','is_dinner']
+		for i, el in enumerate(foods):
+			el['has_allergen'] = (el['has_allergen']).split("@")
+			if len(el['has_allergen']) == 1 and el['has_allergen'][0] == '':
+				el['has_allergen'] = []
+			el['violates_dietary_restriction'] = (el['violates_dietary_restriction']).split()
+			el['id'] = i
+			el['calories'] = int(el['calories'])
+			el['protein'] = float(el['protein'])
+			el['carbs'] = float(el['carbs'])
+			el['fat'] = float(el['fat'])
+			for b in bools:
+				if el[b] == 'TRUE':
+					el[b] = True
+				else:
+					el[b] = False
+		return foods
 
 def get_meal_plan(request):
 	# If the form has been submitted
@@ -141,9 +141,9 @@ def get_meal_plan(request):
 			dietary_restrictions = form.cleaned_data['dietary_restrictions']
 
 			# determine meals
-			breakfast, lunch, dinner, snack = determine_meals(name, height, weight, age, gender, sport, regimen, allergen, dietary_restrictions)
+			values, breakfast, lunch, dinner, snack = determine_meals(name, height, weight, age, gender, sport, regimen, allergen, dietary_restrictions)
 
-			return render(request, 'mealrecommender/meals.html', {'name': name, 'regimen': regimen, 'breakfast': breakfast, 'lunch': lunch, 'dinner': dinner, 'snack': snack})
+			return render(request, 'mealrecommender/meals.html', {'name': name, 'regimen': regimen, 'values': values, 'breakfast': breakfast, 'lunch': lunch, 'dinner': dinner, 'snack': snack})
 	else:
 		form = AthleteForm()
 
@@ -161,54 +161,85 @@ def hasRestriction(restrictions, food):
 			return True
 	return False
 
-def createMeal(filtered_foods, TDEE):
+def createMeal(filtered_foods, TDEE, regimen):
 	items = filtered_foods
-	constraints = lambda values: (values['calories'] < TDEE, values['protein'] < math.floor((TDEE * .3)/4), values['fat'] < math.floor((TDEE * .35)/9), values['carbs'] < math.floor((TDEE * .35)/4))
+	protein_pct = .30
+	carb_pct = .35
+	fat_pct = .35
+	if regimen == "Competition" or regimen == "Conditioning":
+		carb_pct = 0.50
+		protein_pct = 0.30
+		fat_pct = 0.20
+	constraints = lambda values: (values['calories'] < TDEE, values['protein'] < math.floor((TDEE * protein_pct)/4), values['fat'] < math.floor((TDEE * fat_pct)/9), values['carbs'] < math.floor((TDEE * carb_pct)/4))
 	objective = 'calories'
 	knapsack = KSP(objective, items, goal = 'max', constraints = constraints)
 	solution = knapsack.solve('glpk', iprint = 0)
+	print(solution)
 	return solution.xf
+def extractFoods(names, foods):
+	meal = []
+	for name in names:
+		for food in foods:
+			if food['name'] == name:
+				meal.append(food)
+				break
+	return meal
 
 def determine_meals(name, height, weight, age, gender, sport, regimen, allergen, dietary_restrictions):
-    foods = get_foods()
-    filtered_foods_breakfast = []
-    filtered_foods_lunch = []
-    filtered_foods_dinner = []
-    filtered_foods_snack = []
-    for food in foods:
-    	if not hasAllergy(allergen, food) and not hasRestriction(dietary_restrictions, food) and food['is_breakfast']:
-    		filtered_foods_breakfast.append(food)
-    	if not hasAllergy(allergen, food) and not hasRestriction(dietary_restrictions, food) and food['is_lunch']:
-    		filtered_foods_lunch.append(food)
-    	if not hasAllergy(allergen, food) and not hasRestriction(dietary_restrictions, food) and food['is_dinner']:
-    		filtered_foods_dinner.append(food)
-    	if not hasAllergy(allergen, food) and not hasRestriction(dietary_restrictions, food) and food['is_snack']:
-    		filtered_foods_snack.append(food)
-    print(filtered_foods_snack)
-    if gender == 'male':
-    	BMR = (10 * float(weight)) + (6.25 * float(height)) - (5 * float(age)) + 5
-    else:
-    	BMR = (10 * float(weight)) + (6.25 * float(height)) - (5 * float(age)) - 161
-    if regimen == 'Off Day':
-    	activityFactor = 1.2
-    elif regimen == 'Recovery':
-    	activityFactor = 1.55
-    elif regimen == 'Conditioning':
-    	activityFactor = 1.9
-    else:
-    	activityFactor = 1.725
-    TDEE = BMR * activityFactor
-    breakfast = createMeal(filtered_foods_breakfast, TDEE//4)
-    lunch = createMeal(filtered_foods_lunch, TDEE//4)
+	foods = get_foods()
+	filtered_foods_breakfast = []
+	filtered_foods_lunch = []
+	filtered_foods_dinner = []
+	filtered_foods_snack = []
+	for food in foods:
+		if not hasAllergy(allergen, food) and not hasRestriction(dietary_restrictions, food) and food['is_breakfast']:
+			filtered_foods_breakfast.append(food)
+		if not hasAllergy(allergen, food) and not hasRestriction(dietary_restrictions, food) and food['is_lunch']:
+			filtered_foods_lunch.append(food)
+		if not hasAllergy(allergen, food) and not hasRestriction(dietary_restrictions, food) and food['is_dinner']:
+			filtered_foods_dinner.append(food)
+		if not hasAllergy(allergen, food) and not hasRestriction(dietary_restrictions, food) and food['is_snack']:
+			filtered_foods_snack.append(food)
+	print(filtered_foods_snack)
+	if gender == 'male':
+		BMR = (10 * float(weight)) + (6.25 * float(height)) - (5 * float(age)) + 5
+	else:
+		BMR = (10 * float(weight)) + (6.25 * float(height)) - (5 * float(age)) - 161
+	if regimen == 'Off Day':
+		activityFactor = 1.2
+	elif regimen == 'Recovery':
+		activityFactor = 1.55
+	elif regimen == 'Conditioning':
+		activityFactor = 1.9
+	else:
+		activityFactor = 1.725
+	TDEE = BMR * activityFactor
+	breakfast = createMeal(filtered_foods_breakfast, TDEE//4, regimen)
+	breakfast = extractFoods(breakfast, foods)
+	lunch = createMeal(filtered_foods_lunch, TDEE//4, regimen)
+	lunch = extractFoods(lunch, foods)
+	# Do not repeat foods for dinner and lunch
+	for food in filtered_foods_dinner:
+		if food['name'] in lunch:
+			filtered_foods_dinner.remove(food)
 
-    # Do not repeat foods for dinner and lunch
-    for food in filtered_foods_dinner:
-    	if food['name'] in lunch:
-    		filtered_foods_dinner.remove(food)
+	dinner = createMeal(filtered_foods_dinner, TDEE//4, regimen)
+	dinner = extractFoods(dinner, foods)
+	print(filtered_foods_snack)
+	snack = createMeal(filtered_foods_snack, TDEE//4, regimen)
+	snack = extractFoods(snack, foods)
+	protein_pct = .30
+	carb_pct = .35
+	fat_pct = .35
+	if regimen == "Competition" or regimen == "Conditioning":
+		carb_pct = 0.50
+		protein_pct = 0.30
+		fat_pct = 0.20
+	values = {}
+	values['calories'] = round(TDEE)
+	values['protein'] = round(TDEE / 4 * protein_pct)
+	values['carbs'] = round(TDEE / 4 * carb_pct)
+	values['fat'] = round(TDEE / 9 * fat_pct)
 
-    dinner = createMeal(filtered_foods_dinner, TDEE//4)
-    print(filtered_foods_snack)
-    snack = createMeal(filtered_foods_snack, TDEE//4)
-    #NOTE: allergens and dietary restrictions are all lower case in the foods list, but capitalized in the form data.
-    return (breakfast, lunch, dinner, snack)
-    
+	#NOTE: allergens and dietary restrictions are all lower case in the foods list, but capitalized in the form data.
+	return (values, breakfast, lunch, dinner, snack)

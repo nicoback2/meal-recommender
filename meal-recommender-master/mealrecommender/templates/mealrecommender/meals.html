@@ -2,33 +2,70 @@
 
 {% block content %}
 
-<p>Hi {{name}}, here is your suggested meal plan based on your training regimen of {{regimen}} .<p>
+<p>Hi {{name}}, here is your recommended nutritional intake based on your training regimen of {{regimen}}:</p>
+<ul>
+  <li>Calories: {{values.calories}}</li>
+  <li>Protein: {{values.protein}} grams</li>
+  <li>Carbs: {{values.carbs}} grams</li>
+  <li>Fat: {{values.fat}} grams</li>
+</ul>
+
+<p>Following these guidelines, here is a suggested meal plan.<p>
 
 <h1> Breakfast: </h1>
 <ul>
 {% for food in breakfast %}
-    <li>{{ food }}</li>
+    <li><b>{{ food.name }}</b>
+    <ul>
+      <li>Calories: {{food.calories}}</li>
+      <li>Protein: {{food.protein}} grams</li>
+      <li>Carbs: {{food.carbs}} grams</li>
+      <li>Fat: {{food.fat}} grams</li>
+    </ul>
+  </li>
 {% endfor %}
 </ul>
 
 <h1> Lunch: </h1>
 <ul>
 {% for food in lunch %}
-    <li>{{ food }}</li>
+    <li><b>{{ food.name }}</b>
+    <ul>
+      <li>Calories: {{food.calories}}</li>
+      <li>Protein: {{food.protein}} grams</li>
+      <li>Carbs: {{food.carbs}} grams</li>
+      <li>Fat: {{food.fat}} grams</li>
+    </ul>
+  </li>
 {% endfor %}
 </ul>
 
 <h1> Dinner: </h1>
 <ul>
 {% for food in dinner %}
-    <li>{{ food }}</li>
+    <li><b>{{ food.name }}</b>
+    <ul>
+      <li>Calories: {{food.calories}}</li>
+      <li>Protein: {{food.protein}} grams</li>
+      <li>Carbs: {{food.carbs}} grams</li>
+      <li>Fat: {{food.fat}} grams</li>
+    </ul>
+  </li>
 {% endfor %}
 </ul>
 
 <h1> Snacks: </h1>
 <ul>
 {% for food in snack %}
-    <li>{{ food }}</li>
+    <li><b>{{ food.name }}</b>
+
+    <ul>
+      <li>Calories: {{food.calories}}</li>
+      <li>Protein: {{food.protein}} grams</li>
+      <li>Carbs: {{food.carbs}} grams</li>
+      <li>Fat: {{food.fat}} grams</li>
+    </ul>
+  </li>
 {% endfor %}
 </ul>
 
